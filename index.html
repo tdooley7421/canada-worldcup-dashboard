@@ -1,1 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="60">
 
+<title>Canada World Cup Tracker</title>
+
+<style>
+body{
+    background:#111;
+    color:white;
+    font-family:Arial, sans-serif;
+    padding:30px;
+}
+
+.card{
+    background:#222;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:12px;
+}
+
+.title{
+    font-size:42px;
+    font-weight:bold;
+}
+
+.value{
+    font-size:30px;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <div class="title">🇨🇦 Canada World Cup Tracker</div>
+</div>
+
+<div class="card">
+    <div id="liveMatch">Loading...</div>
+</div>
+
+<div class="card">
+    <div id="standings">Loading standings...</div>
+</div>
+
+<div class="card">
+    <div id="nextMatch">Loading fixtures...</div>
+</div>
+
+<script>
+
+const API_KEY = "YOUR_API_KEY";
+
+async function loadLiveScores(){
+
+    const response =
+        await fetch(
+        `https://api.worldcupapi.com/livescores?key=${API_KEY}`
+        );
+
+    const data = await response.json();
+
+    const canadaGame =
+        data.find(m =>
+            m.home.name === "Canada" ||
+            m.away.name === "Canada"
+        );
+
+    if(canadaGame){
+
+        document.getElementById("liveMatch").innerHTML =
+            `
+            <h2>LIVE MATCH</h2>
+            <div class="value">
+            ${canadaGame.home.name}
+            ${canadaGame.scores.score}
+            ${canadaGame.away.name}
+            </div>
+            <div>${canadaGame.status}</div>
+            `;
+    }
+    else{
+        document.getElementById("liveMatch").innerHTML =
+            "<h2>No Canada match currently live</h2>";
+    }
+}
+
+async function loadStandings(){
+
+    const response =
+        await fetch(
+        `https://api.worldcupapi.com/standings?group=B&key=${API_KEY}`
+        );
+
+    const data = await response.json();
+
+    let html = "<h2>Group B Standings</h2>";
+
+    data.forEach(team => {
+
+        html += `
+        <div>
+            ${team.rank}. ${team.team.name}
+            (${team.points} pts)
+        </div>`;
+    });
+
+    document.getElementById("standings").innerHTML = html;
+}
+
+async function loadFixtures(){
+
+    const response =
+        await fetch(
+        `https://api.worldcupapi.com/fixtures?key=${API_KEY}`
+        );
+
+    const data = await response.json();
+
+    const canadaMatches =
+        data.filter(m =>
+            m.home.name === "Canada" ||
+            m.away.name === "Canada"
+        );
+
+    const next =
+        canadaMatches.find(m =>
+            m.status !== "Finished"
+        );
+
+    if(next){
+
+        document.getElementById("nextMatch").innerHTML =
+            `
+            <h2>Next Match</h2>
+            <div class="value">
+            ${next.home.name}
+            vs
+            ${next.away.name}
+            </div>
+            <div>${next.date}</div>
+            `;
+    }
+}
+
+loadLiveScores();
+loadStandings();
+loadFixtures();
+
+setInterval(loadLiveScores,60000);
+setInterval(loadStandings,60000);
+setInterval(loadFixtures,60000);
+
+</script>
+
+</body>
+</html>
